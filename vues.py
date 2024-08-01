@@ -54,6 +54,7 @@ class View:
                 f"du {tournoi.date_debut.strftime('%d/%m/%Y')} "
                 f"au {tournoi.date_fin.strftime('%d/%m/%Y')}, "
                 f"ID: {tournoi.id_tournoi}, "
+                f"Nombre de tours max : {tournoi.nombre_max_tours}, "
                 f"nombre de participants : {len(tournoi.participants)}"
             )
 
@@ -127,9 +128,16 @@ class View:
             else:
                 print("Format de date incorrect. Utilisez JJ/MM/AAAA")
         id_tournoi = input("ID du tournoi: ")
+        nombre_max_tours_str = input(
+            "Nombre de tours maximum (4 par défaut) : "
+        )
+        nombre_max_tours = int(
+            (nombre_max_tours_str) if nombre_max_tours_str else 4
+        )
         description = input("Description du tournoi: ")
         return Tournoi(
-            nom_tournoi, lieu, date_debut, date_fin, id_tournoi, description
+            nom_tournoi, lieu, date_debut, date_fin, id_tournoi, 
+            nombre_max_tours, description
         )
 
     @staticmethod
@@ -175,13 +183,15 @@ class View:
     @staticmethod
     def afficher_tours_et_matchs(tournoi):
         print(f"\n\n--- Tournoi: {tournoi.nom_tournoi} --- \n")
+        if tournoi.description:
+            print(f"Description : {tournoi.description}\n")
         tournoi.classement_tournoi()
         if not tournoi.tours:
             print("\nAucun tour disponible.\n")
             return
 
         for index, tour in enumerate(tournoi.tours, start=1):
-            print(f"\nTour {index}: \n\n")
+            print(f"\n\nTour {index}: \n\n")
             if not tour.matchs:
                 print("  Aucun match prévu pour ce tour. \n")
                 continue

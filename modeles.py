@@ -110,7 +110,7 @@ class Tour:
 class Tournoi:
     def __init__(
         self, nom_tournoi, lieu, date_debut, date_fin, id_tournoi,
-        description=""
+        nombre_max_tours, description=""
     ):
         self.nom_tournoi = nom_tournoi
         self.lieu = lieu
@@ -123,9 +123,10 @@ class Tournoi:
         else:
             self.date_fin = date_fin
         self.id_tournoi = id_tournoi
+        self.nombre_max_tours = nombre_max_tours
+        self.description = description
         self.tours = []
         self.tour_actuel = 0
-        self.description = description
         self.participants = []
         self.db = None
         self.joueur_exempt = None
@@ -170,13 +171,18 @@ class Tournoi:
                     return False
         return True
 
-    def generer_un_tour(self, db):
-
-        if len(self.tours) >= 4:
+    def verifier_nombre_max_tours(self):
+        if len(self.tours) >= self.nombre_max_tours:
             print(
-                "\nLe tournoi a déjà 4 tours. "
+                f"\nLe tournoi a déjà {self.nombre_max_tours} tours. "
                 "Aucun nouveau tour ne peut être créé."
             )
+            return False
+        return True
+    
+    def generer_un_tour(self, db):
+
+        if not self.verifier_nombre_max_tours():
             return
 
         if len(self.participants) < 2:
@@ -288,6 +294,7 @@ class Tournoi:
             'tours': [tour.to_dict() for tour in self.tours],
             'participants': self.participants,
             'joueur_exempt': self.joueur_exempt,
+            'nombre_max_tours': self.nombre_max_tours,
             'description': self.description,
         }
 
@@ -303,6 +310,7 @@ class Tournoi:
                 datetime.strptime(data['date_fin'], '%d/%m/%Y').date()
             ),
             id_tournoi=data['id_tournoi'],
+            nombre_max_tours = data.get('nombre_max_tours', 4),
             description=data.get('description', '')
         )
 

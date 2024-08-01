@@ -112,6 +112,13 @@ class ApplicationController:
                 f"Date de fin (actuel: "
                 f"{tournoi.date_fin.strftime('%d/%m/%Y')}): "
             ) or tournoi.date_fin.strftime('%d/%m/%Y')
+            nombre_max_tours = input(
+                f"Nombre de tours max (actuel: {tournoi.nombre_max_tours}): "
+            )
+            nombre_max_tours = int(
+            (nombre_max_tours) if nombre_max_tours 
+            else tournoi.nombre_max_tours 
+            )
             description = input(
                 f"Description (actuelle: {tournoi.description}): "
             ) or tournoi.description
@@ -123,6 +130,7 @@ class ApplicationController:
             tournoi.date_fin = (
                 datetime.strptime(date_fin, '%d/%m/%Y').date()
             )
+            tournoi.nombre_max_tours = nombre_max_tours
             tournoi.description = description
             print("Tournoi modifié avec succès!")
             self.db.save()
@@ -215,7 +223,7 @@ class ApplicationController:
         print(
             f"\nMatch sélectionné : {match.joueur1.prenom} "
             f"{match.joueur1.nom} "
-            f"vs {match.joueur2.prenom} {match.joueur2.nom}"
+            f"vs {match.joueur2.prenom} {match.joueur2.nom}\n"
         )
 
         while True:
