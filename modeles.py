@@ -59,19 +59,14 @@ class Joueur:
 
 
 class Tour:
-    def __init__(self, nom, matchs, joueur_exempt=None):
+    def __init__(self, nom, matchs):
         self.nom = nom
         self.matchs = matchs
-        self.joueur_exempt = joueur_exempt
 
     def to_dict(self):
         return {
             'nom': self.nom,
             'matchs': [match.to_dict() for match in self.matchs],
-            'joueur_exempt': (
-                self.joueur_exempt.id_joueur if self.joueur_exempt
-                else None
-            )
         }
 
     @staticmethod
@@ -88,11 +83,6 @@ class Tour:
 
     def __str__(self):
         result = f"--- {self.nom} ---\n"
-        if self.joueur_exempt:
-            result += (
-                f"{self.joueur_exempt.prenom} {self.joueur_exempt.nom} "
-                "est exempté ce tour.\n"
-            )
         result += "Matchs pour {self.nom} :\n"
         for match in self.matchs:
             joueur1 = match.joueur1
@@ -101,9 +91,6 @@ class Tour:
                 f"{joueur1.prenom} {joueur1.nom} (ID: {joueur1.id_joueur}) vs"
                 f" {joueur2.prenom} {joueur2.nom} (ID: {joueur2.id_joueur})\n"
             )
-        if self.joueur_exempt:
-            result += (
-                f"Joueur exempté ce tour: {self.joueur_exempt.id_joueur}\n")
         return result
 
 
@@ -129,10 +116,8 @@ class Tournoi:
         self.tour_actuel = 0
         self.participants = []
         self.db = None
-        self.joueur_exempt = None
         self.resultats = {}
         self.paires_deja_jouees = set()
-        self.joueurs_exempts = set()
 
     def classement_tournoi(self):
         scores_tournoi = {id_joueur: 0 for id_joueur in self.participants}
@@ -199,15 +184,10 @@ class Tournoi:
         joueurs = self.trier_participants(db)
 
         matchs = []
-        joueur_exempt = None
 
         if len(joueurs) % 2 != 0:
-            for joueur in joueurs:
-                if joueur.id_joueur not in self.joueurs_exempts:
-                    joueur_exempt = joueur
-                    self.joueurs_exempts.add(joueur.id_joueur)
-                    joueurs.remove(joueur)
-                    break
+            print("\nLe nombre de participants doit être paire.")
+            return
 
         joueurs_disponibles = joueurs[:]
         paires_deja_jouees_local = set(self.paires_deja_jouees)
@@ -246,8 +226,7 @@ class Tournoi:
 
         numero_tour = len(self.tours) + 1
         tour = Tour(
-            nom=f"Tour {numero_tour}",
-            matchs=matchs, joueur_exempt=joueur_exempt
+            nom=f"Tour {numero_tour}", matchs=matchs
         )
         self.tours.append(tour)
 
@@ -260,12 +239,6 @@ class Tournoi:
             print(
                 f"- {joueur1.prenom} {joueur1.nom} (ID: {joueur1.id_joueur}) "
                 f"vs {joueur2.prenom} {joueur2.nom} (ID: {joueur2.id_joueur})"
-            )
-
-        if tour.joueur_exempt:
-            print(
-                f"\nJoueur exempté ce tour: {tour.joueur_exempt.id_joueur} "
-                f"({tour.joueur_exempt.nom} {tour.joueur_exempt.prenom}) \n"
             )
 
         db.save()
@@ -293,7 +266,6 @@ class Tournoi:
             'id_tournoi': self.id_tournoi,
             'tours': [tour.to_dict() for tour in self.tours],
             'participants': self.participants,
-            'joueur_exempt': self.joueur_exempt,
             'nombre_max_tours': self.nombre_max_tours,
             'description': self.description,
         }
@@ -316,7 +288,6 @@ class Tournoi:
 
         participants = data.get('participants', [])
         tournoi.participants = participants
-        tournoi.joueur_exempt = data.get('joueur_exempt', None)
 
         tournoi.db = db
         tournoi.tours = (

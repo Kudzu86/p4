@@ -209,9 +209,6 @@ class View:
                     print(f"    Résultat: {resultat} \n")
                 else:
                     print("    Résultat: En attente \n\n")
-            if tour.joueur_exempt:
-                print(f"Joueur exempt : {tour.joueur_exempt.id_joueur} \
-({tour.joueur_exempt.prenom} {tour.joueur_exempt.nom})\n\n")
 
     def afficher_tournois_disponibles(self, tournois):
         print("\nSélectionnez un tournoi pour modifier les résultats :")
