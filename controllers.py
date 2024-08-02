@@ -1,4 +1,4 @@
-from modeles import Database, Tournoi
+from modeles import Database
 from vues import View
 from datetime import datetime
 
@@ -116,8 +116,8 @@ class ApplicationController:
                 f"Nombre de tours max (actuel: {tournoi.nombre_max_tours}): "
             )
             nombre_max_tours = int(
-            (nombre_max_tours) if nombre_max_tours 
-            else tournoi.nombre_max_tours 
+                (nombre_max_tours) if nombre_max_tours
+                else tournoi.nombre_max_tours
             )
             description = input(
                 f"Description (actuelle: {tournoi.description}): "
@@ -143,7 +143,7 @@ class ApplicationController:
     def voir_tournois(self):
         tournois = self.db.tournois
         tournoi = self.view.afficher_tournois(self.db, tournois)
-        View.choix_tournoi(tournois)        
+        View.choix_tournoi(tournois)
         if tournoi:
             print(f"Détails du tournoi sélectionné: {tournoi.nom_tournoi}\n\n")
 
@@ -175,7 +175,7 @@ class ApplicationController:
         tournois = self.db.tournois
         self.view.afficher_tournois_disponibles(tournois)
 
-    def saisir_modifier_resultats(self):
+    def selection_tournoi_score(self):
         self.afficher_tournois_disponibles()
         choix_tournoi = int(input(
             "\nEntrez le numéro du tournoi pour saisir/modifier "
@@ -190,44 +190,60 @@ class ApplicationController:
             f"Tournoi sélectionné: {tournoi.nom_tournoi} à {tournoi.lieu}, "
             f"du {tournoi.date_debut} au {tournoi.date_fin}"
         )
+        return tournoi
 
-        self.afficher_tours_et_matchs(tournoi)
-        tour_num = int(input(
-            "Entrez le numéro du tour pour saisir/modifier les résultats "
-            "(ou 0 pour quitter): "
-        ))
-        if tour_num == 0:
-            return
-        tour = next(
-            (t for t in tournoi.tours if t.nom == f"Tour {tour_num}"), None
-        )
-        if not tour:
-            print("Tour non trouvé.")
-            return
-        match_num = int(input(
-            "Entrez le numéro du match pour saisir/modifier "
-            "le résultat (ou 0 pour quitter): "
-        ))
-        if match_num == 0:
-            return
-        match = next(
-            (m for m in tour.matchs if tour.matchs.index(m)
-                + 1 == match_num), None
-        )
-        if not match:
-            print("Match non trouvé.")
-            return
+    def selectionner_tour_et_match_score(self, tournoi):
+        while True:
+            self.afficher_tours_et_matchs(tournoi)
+            tour_num = int(input(
+                "Entrez le numéro du tour pour saisir/modifier les résultats "
+                "(ou 0 pour quitter): "
+            ))
+            if tour_num == 0:
+                return None, None
+            tour = next(
+                (t for t in tournoi.tours if t.nom == f"Tour {tour_num}"), None
+            )
+            if not tour:
+                print("Tour non trouvé.")
+                continue
 
-        joueur1_score = None
-        joueur2_score = None
-        print(
-            f"\nMatch sélectionné : {match.joueur1.prenom} "
-            f"{match.joueur1.nom} "
-            f"vs {match.joueur2.prenom} {match.joueur2.nom}\n"
-        )
+            match_num = int(input(
+                "Entrez le numéro du match pour saisir/modifier "
+                "le résultat (ou 0 pour quitter): "
+            ))
+            if match_num == 0:
+                continue
+            match = next(
+                (m for m in tour.matchs if tour.matchs.index(m)
+                    + 1 == match_num), None
+            )
+            if not match:
+                print("Match non trouvé.")
+                continue
+            return tour, match
+
+    def saisir_modifier_resultats(self):
+        tournoi = self.selection_tournoi_score()
+        if tournoi is None:
+            return
 
         while True:
-            try:
+            tour, match = self.selectionner_tour_et_match_score(tournoi)
+            if match is None:
+                if tour is None:
+                    break
+                continue
+
+            joueur1_score = None
+            joueur2_score = None
+            print(
+                f"\nMatch sélectionné : {match.joueur1.prenom} "
+                f"{match.joueur1.nom} "
+                f"vs {match.joueur2.prenom} {match.joueur2.nom}\n"
+            )
+
+            while True:
                 joueur1_input = input(
                     f"Entrez le score pour {match.joueur1.prenom} "
                     f"{match.joueur1.nom} (0, 0.5, 1 ou # "
@@ -246,15 +262,18 @@ class ApplicationController:
                     )
                 joueur2_score = 1 - joueur1_score
                 break
-            except ValueError as e:
-                print(f"Entrée invalide : {e}. Score non valide.")
 
-        if joueur1_score is not None and joueur2_score is not None:
-            match.set_scores(joueur1_score, joueur2_score)
-        print(f"Résultats mis à jour pour le match {match_num}.")
+            if joueur1_score is not None and joueur2_score is not None:
+                match.set_scores(joueur1_score, joueur2_score)
+            print(
+                f"Résultats mis à jour pour le match : {match.joueur1.prenom} "
+                f"{match.joueur1.nom} ({match.joueur1.id_joueur})  vs  "
+                f"({match.joueur2.id_joueur}) {match.joueur2.prenom} "
+                f"{match.joueur2.nom}."
+            )
 
-        tournoi.classement_tournoi()
-        self.db.save()
+            tournoi.classement_tournoi()
+            self.db.save()
 
     def reinitialiser_scores(self):
         confirmation = input(

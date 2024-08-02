@@ -164,32 +164,34 @@ class Tournoi:
             )
             return False
         return True
-    
-    def generer_un_tour(self, db):
+
+    def verifier_conditions_tour(self, db):
 
         if not self.verifier_nombre_max_tours():
             return
 
         if len(self.participants) < 2:
             print("\nPas assez de participants pour générer un match")
-            return
+            return False
 
         if not self.tous_les_resultats_sont_remplis():
             print(
                 "\nTous les résultats des matchs précédents doivent "
                 "être entrés avant de générer un nouveau tour."
             )
-            return
+            return False
 
         joueurs = self.trier_participants(db)
+        if len(joueurs) % 2 != 0:
+            print("\nLe nombre de participants doit être pair.")
+            return False
+
+        return True
+
+    def preparer_tour(self):
 
         matchs = []
-
-        if len(joueurs) % 2 != 0:
-            print("\nLe nombre de participants doit être paire.")
-            return
-
-        joueurs_disponibles = joueurs[:]
+        joueurs_disponibles = self.trier_participants(self.db)
         paires_deja_jouees_local = set(self.paires_deja_jouees)
 
         while len(joueurs_disponibles) >= 2:
@@ -207,7 +209,7 @@ class Tournoi:
                         paire not in self.paires_deja_jouees and
                         paire_inverse not in self.paires_deja_jouees
                     ):
-                        matchs.append(Match(joueur1, joueur2, db))
+                        matchs.append(Match(joueur1, joueur2, self.db))
                         self.paires_deja_jouees.add(paire)
                         joueurs_disponibles.pop(j)
                         joueurs_disponibles.pop(i)
@@ -223,6 +225,15 @@ class Tournoi:
                     "pour les joueurs restants."
                 )
                 break
+
+        return matchs, paires_deja_jouees_local
+
+    def generer_un_tour(self, db):
+
+        if not self.verifier_conditions_tour(db):
+            return
+
+        matchs, paires_deja_jouees_local = self.preparer_tour()
 
         numero_tour = len(self.tours) + 1
         tour = Tour(
@@ -282,7 +293,7 @@ class Tournoi:
                 datetime.strptime(data['date_fin'], '%d/%m/%Y').date()
             ),
             id_tournoi=data['id_tournoi'],
-            nombre_max_tours = data.get('nombre_max_tours', 4),
+            nombre_max_tours=data.get('nombre_max_tours', 4),
             description=data.get('description', '')
         )
 

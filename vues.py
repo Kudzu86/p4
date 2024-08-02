@@ -136,7 +136,7 @@ class View:
         )
         description = input("Description du tournoi: ")
         return Tournoi(
-            nom_tournoi, lieu, date_debut, date_fin, id_tournoi, 
+            nom_tournoi, lieu, date_debut, date_fin, id_tournoi,
             nombre_max_tours, description
         )
 
